@@ -1,0 +1,122 @@
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
+const scale = width / 360;
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: scale * 18,
+    marginTop: scale * 8,
+    marginBottom: scale * 4,
+    alignItems: 'flex-end',
+  },
+  publicCard: {
+    width: scale * 158,
+    height: scale * 100,
+    borderWidth: 2,
+    borderColor: '#d9d9d9',
+    borderRadius: scale * 15,
+    backgroundColor: '#38bdf8',
+    flexDirection: 'row',
+    elevation: 10,
+    overflow: 'hidden',
+  },
+  publicTextContainer: {
+    paddingLeft: scale * 15,
+    width: scale * 90,
+    justifyContent: 'center',
+    height: '100%',
+  },
+  publicText: {
+    color: '#1f3564',
+    fontSize: scale * 15,
+    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
+    lineHeight: scale * 20,
+  },
+  publicIconContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconSize: {
+    width: scale * 40,
+  },
+  sosWrapper: {
+    width: scale * 158,
+    height: scale * 115,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  sosBellTop: {
+    flexDirection: 'row',
+    position: 'absolute',
+    top: 0,
+    left: scale * 52,
+    width: scale * 50,
+    height: scale * 13,
+  },
+  bell1: {
+    position: 'absolute',
+    left: scale * 22,
+    width: scale * 6,
+    height: scale * 10,
+    backgroundColor: '#feba00',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+  },
+  bell2: {
+    position: 'absolute',
+    left: scale * 2,
+    top: scale * 1,
+    width: scale * 6,
+    height: scale * 10,
+    backgroundColor: '#feba00',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    transform: [{ rotate: '-15deg' }],
+  },
+  bell3: {
+    position: 'absolute',
+    left: scale * 43,
+    top: scale * 1,
+    width: scale * 6,
+    height: scale * 10,
+    backgroundColor: '#feba00',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    transform: [{ rotate: '15deg' }],
+  },
+  sosCardTop: {
+    width: scale * 156,
+    height: scale * 80,
+    backgroundColor: '#ef4444',
+    borderTopLeftRadius: scale * 45,
+    borderTopRightRadius: scale * 45,
+    borderWidth: 2,
+    borderColor: '#d9d9d9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: scale * 15,
+    elevation: 10,
+  },
+  sosCardBottom: {
+    width: scale * 156,
+    height: scale * 20,
+    backgroundColor: '#eaeaea',
+    borderBottomLeftRadius: scale * 15,
+    borderBottomRightRadius: scale * 15,
+    borderWidth: 2,
+    borderColor: '#d9d9d9',
+    elevation: 10,
+  },
+  sosText: {
+    color: '#fff',
+    fontSize: scale * 15,
+    fontFamily: 'Pretendard-SemiBold',
+  },
+});
+
+export default styles;
