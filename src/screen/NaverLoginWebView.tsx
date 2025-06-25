@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/navigationType';
 
-const CLIENT_ID = '_IOoScdWMHGFtADkY_Jn'; // 네이버 개발자센터에서 발급
+const CLIENT_ID = '-------'; // 네이버 개발자센터에서 발급
 const STATE = 'RANDOM_STRING_1234'; // CSRF 방지용 문자열 (임의값 가능)
 const REDIRECT_URI = 'http://43.201.66.251:8080/api/auth/login/naver'; // 딥링크와 백엔드 모두 동일하게 설정
 const NAVER_AUTH_URL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&state=${STATE}`;
