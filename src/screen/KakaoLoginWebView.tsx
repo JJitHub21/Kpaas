@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/navigationType';
 
-const REST_API_KEY = '2fc2526baed473bcdab5a49151d8c70c';
+const REST_API_KEY = '---------';
 const REDIRECT_URI = 'http://43.201.66.251:8080/api/auth/login/kakao';
 const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
 
