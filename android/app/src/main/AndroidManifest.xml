@@ -1,6 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
       android:name=".MainApplication"
@@ -10,6 +16,14 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true">
+
+        <!-- broadcast receiver 등록 -->
+        <receiver android:name=".GeofenceBroadcastReceiver" android:enabled="true" android:exported="false" />
+
+      <meta-data
+        android:name="com.google.android.geo.API_KEY"
+        android:value="AIzaSyAkpEGqeMnrcds6-isbWiapvn68aIBCtB4"/>
+
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
@@ -17,10 +31,15 @@
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
         android:exported="true">
+
+        <!-- 앱 실행용 (앱 아이콘 보이게 만드는 핵심) -->
         <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
+          <action android:name="android.intent.action.MAIN" />
+          <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <!-- 딥링크용 (guard://login-callback) -->
+        <intent-filter>
             <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.LAUNCHER" />
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="guard" android:host="login-callback" /> <!-- 태훈이거랑 연동 -->
         </intent-filter>

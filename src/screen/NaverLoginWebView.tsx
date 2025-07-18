@@ -5,10 +5,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/navigationType';
+import CookieManager from '@react-native-cookies/cookies'; // 쿠키 충돌 관리 라이브러리
 
 const CLIENT_ID = '-------'; // 네이버 개발자센터에서 발급
 const STATE = 'RANDOM_STRING_1234'; // CSRF 방지용 문자열 (임의값 가능)
-const REDIRECT_URI = 'http://43.201.66.251:8080/api/auth/login/naver'; // 딥링크와 백엔드 모두 동일하게 설정
+const REDIRECT_URI = 'http://3.37.99.32:8080/api/auth/login/naver'; // 딥링크와 백엔드 모두 동일하게 설정
 const NAVER_AUTH_URL = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&state=${STATE}`;
 
 export default function NaverLoginWebView() {
@@ -63,9 +64,13 @@ export default function NaverLoginWebView() {
         source={{ uri: NAVER_AUTH_URL }}
         javaScriptEnabled
         originWhitelist={['*']}
+        sharedCookiesEnabled={true} // ✅ 필수
+        thirdPartyCookiesEnabled={true} // ✅ 필수
         onShouldStartLoadWithRequest={(request) => {
           const url = request.url;
+          console.log('[WebView] onShouldStartLoadWithRequest URL:', url);
           if (url.startsWith('guard://')) {
+            console.log('[WebView] guard:// URL 감지됨 (onShouldStartLoadWithRequest)');
             handleOpenAppLink(url);
             return false;
           }
@@ -74,8 +79,14 @@ export default function NaverLoginWebView() {
         onNavigationStateChange={(navState) => {
           const url = navState.url;
           if (url.startsWith('guard://')) {
+            console.log('[WebView] guard:// URL 감지됨 (onNavigationStateChange)');
             handleOpenAppLink(url);
           }
+        }}
+        onLoadEnd={() => {
+          CookieManager.flush().then(() => {
+            console.log('🍪 쿠키 flush 완료 (onLoadEnd)');
+          });
         }}
       />
     </View>

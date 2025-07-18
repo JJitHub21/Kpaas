@@ -6,9 +6,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/navigationType';
+import CookieManager from '@react-native-cookies/cookies'; // 쿠키 충돌 관리 라이브러리
 
-const REST_API_KEY = '---------';
-const REDIRECT_URI = 'http://43.201.66.251:8080/api/auth/login/kakao';
+const REST_API_KEY = '2fc2526baed473bcdab5a49151d8c70c';
+const REDIRECT_URI = 'http://3.37.99.32:8080/api/auth/login/kakao';
 const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
 
 export default function KakaoLoginWebView() {
@@ -19,14 +20,10 @@ export default function KakaoLoginWebView() {
 
     try {
       const queryString = url.split('?')[1];
-      if (!queryString) {
-        console.warn('[KakaoLoginWebView.tsx] URL에 쿼리 없음');
-        return;
-      }
+      if (!queryString) return;
 
       const queryParts = queryString.split('&');
       const params: Record<string, string> = {};
-
       queryParts.forEach((part) => {
         const [key, value] = part.split('=');
         if (key && value) {
@@ -39,20 +36,18 @@ export default function KakaoLoginWebView() {
       const nickname = params['nickname'];
 
       console.log('[KakaoLoginWebView.tsx] accessToken:', accessToken);
-      console.log('[KakaoLoginWebView.tsx] refreshToken:', refreshToken);
-      console.log('[KakaoLoginWebView.tsx] nickname:', nickname);
 
       if (accessToken) {
         await AsyncStorage.setItem('jwt', accessToken);
         if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
         if (nickname) await AsyncStorage.setItem('nickname', nickname);
+
         console.log('[KakaoLoginWebView.tsx] AsyncStorage 저장 완료');
 
         navigation.reset({
           index: 0,
-          routes: [{ name: 'Main', params: undefined }],
+          routes: [{ name: 'Main' }],
         });
-        console.log('[KakaoLoginWebView.tsx] navigation.reset 실행됨');
       } else {
         console.warn('[KakaoLoginWebView.tsx] accessToken 없음');
       }
@@ -67,11 +62,12 @@ export default function KakaoLoginWebView() {
         source={{ uri: KAKAO_AUTH_URL }}
         javaScriptEnabled
         originWhitelist={['*']}
+        sharedCookiesEnabled={true}
+        thirdPartyCookiesEnabled={true}
         onShouldStartLoadWithRequest={(request) => {
           const url = request.url;
           console.log('[WebView] onShouldStartLoadWithRequest URL:', url);
           if (url.startsWith('guard://')) {
-            console.log('[WebView] guard:// URL 감지됨 (onShouldStartLoadWithRequest)');
             handleOpenAppLink(url);
             return false;
           }
@@ -79,11 +75,14 @@ export default function KakaoLoginWebView() {
         }}
         onNavigationStateChange={(navState) => {
           const url = navState.url;
-          console.log('[WebView] onNavigationStateChange URL:', url);
           if (url.startsWith('guard://')) {
-            console.log('[WebView] guard:// URL 감지됨 (onNavigationStateChange)');
             handleOpenAppLink(url);
           }
+        }}
+        onLoadEnd={() => {
+          CookieManager.flush().then(() => {
+            console.log('🍪 쿠키 flush 완료 (onLoadEnd)');
+          });
         }}
       />
     </View>

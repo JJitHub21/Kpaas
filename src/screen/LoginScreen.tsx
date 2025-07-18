@@ -11,6 +11,7 @@ import { loginStyle as styles } from '../style/loginStyle';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/navigationType';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -18,8 +19,18 @@ export default function LoginScreen() {
   const [selected, setSelected] = useState<'user' | 'guardian'>('user');
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
-  const handleLogin = (type: string) => {
+  const handleLogin = async (type: string) => {
   console.log('[LoginScreen.tsx] handleLogin 진입');
+
+  // 선택된 로그인 유형을 저장
+  try {
+    await AsyncStorage.setItem('userType', selected); // 'user' 또는 'guardian'
+    console.log('[LoginScreen.tsx] userType 저장됨:', selected);
+  } catch (e) {
+    console.error('[LoginScreen.tsx] userType 저장 실패:', e);
+  }
+
+  // 로그인 방식에 따른 분기
   if (type === 'kakao') {
     console.log('[LoginScreen.tsx] 카카오 로그인 버튼 클릭됨');
     navigation.navigate('KakaoLoginWebView');
