@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
       android:name=".MainApplication"
@@ -16,9 +17,6 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true">
-
-        <!-- broadcast receiver 등록 -->
-        <receiver android:name=".GeofenceBroadcastReceiver" android:enabled="true" android:exported="false" />
 
       <meta-data
         android:name="com.google.android.geo.API_KEY"
@@ -44,5 +42,12 @@
             <data android:scheme="guard" android:host="login-callback" /> <!-- 태훈이거랑 연동 -->
         </intent-filter>
       </activity>
+        <!-- broadcast receiver 등록 -->
+        <receiver android:name=".GeofenceBroadcastReceiver" android:enabled="true" android:exported="false" />
+        <service
+            android:name=".GeofenceForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" />
     </application>
 </manifest>
