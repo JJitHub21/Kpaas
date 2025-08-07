@@ -20,10 +20,12 @@
     "lucide-react-native": "^0.511.0",
     "react": "19.0.0",
     "react-native": "0.79.2",
+    "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "^2.25.0",
     "react-native-maps": "^1.24.3",
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "^4.10.0",
+    "react-native-sound": "^0.12.0",
     "react-native-svg": "^15.12.0",
     "react-native-webview": "^13.13.5"
   },
