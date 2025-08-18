@@ -1,4 +1,3 @@
-// GeofenceForegroundService.java
 package com.bodyguardapp2;
 
 import android.app.Notification;

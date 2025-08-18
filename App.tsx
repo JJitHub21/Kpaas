@@ -19,7 +19,7 @@ import { CommonActions } from '@react-navigation/native';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  // ✅ 여기에서 NavigationContainerRef 타입 명시
+  // 여기에서 NavigationContainerRef 타입 명시
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   useEffect(() => {

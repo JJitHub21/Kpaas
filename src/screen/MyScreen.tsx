@@ -15,12 +15,29 @@ import UserInfo from '../content/UserInfo';
 import FeatureCard from '../content/FeatureCard';
 import BottomNavigation from '../content/BottomNavigation';
 import { RootStackParamList } from '../navigation/navigationType';
+import { useEffect, useState } from 'react';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 type MyScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
 
 export default function MyScreen() {
+  const [userType, setUserType] = useState<'user' | 'guardian' | null>(null);
+
+  useEffect(() => {
+    console.log('[MainScreen.tsx] MainScreen 진입함');
+
+    const getUserType = async () => {
+      const type = await AsyncStorage.getItem('userType');
+      if (type === 'user' || type === 'guardian') {
+        setUserType(type);
+        console.log('[MainScreen.tsx] userType:', type);
+      }
+    };
+
+    getUserType();
+  }, []);
+
   const navigation = useNavigation<MyScreenNavigationProp>();
 
   const handleLogout = async () => {
@@ -56,6 +73,8 @@ export default function MyScreen() {
     );
   };
 
+  if (!userType) return null;
+
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <Header title="마이" />
@@ -70,7 +89,7 @@ export default function MyScreen() {
           onPress={handleLogoutPress}
         />
       </ScrollView>
-      <BottomNavigation active="my" />
+      <BottomNavigation active="my" userType={userType} />
     </View>
   );
 }

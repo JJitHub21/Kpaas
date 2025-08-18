@@ -8,11 +8,16 @@ import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable; 
 
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.WritableMap; 
+import com.facebook.react.bridge.Arguments;   
+import com.facebook.react.modules.core.DeviceEventManagerModule; 
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -26,15 +31,15 @@ import com.google.android.gms.location.Priority;
 public class GeofencingModule extends ReactContextBaseJavaModule {
     private final ReactApplicationContext reactContext;
     private GeofencingClient geofencingClient;
-    private FusedLocationProviderClient fusedLocationClient; // ✅ 위치 클라이언트 추가
-    private LocationCallback locationCallback; // ✅ 위치 콜백 추가
+    private FusedLocationProviderClient fusedLocationClient;
+    private LocationCallback locationCallback;
     private static final String TAG = "GeofencingModule";
 
     GeofencingModule(ReactApplicationContext context) {
         super(context);
         this.reactContext = context;
         geofencingClient = LocationServices.getGeofencingClient(context);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context); // ✅ 클라이언트 초기화
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
     }
 
     @Override
@@ -42,10 +47,24 @@ public class GeofencingModule extends ReactContextBaseJavaModule {
         return "GeofencingModule";
     }
 
+    // GeofenceBroadcastReceiver에서 호출하여 JS로 이벤트를 전송하는 메소드
+    public void sendGeofenceEvent(String eventName, WritableMap params) {
+        try {
+            if (reactContext.hasActiveCatalystInstance()) {
+                reactContext
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(eventName, params);
+                Log.d(TAG, "Event " + eventName + " sent to JS.");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error sending event to JS: ", e);
+        }
+    }
+    // -------------------------
+
     @SuppressLint("MissingPermission")
     @ReactMethod
     public void addGeofence(String id, double latitude, double longitude, float radius, Promise promise) {
-        // ... 기존 addGeofence 코드는 그대로 둡니다 ...
         Geofence geofence = new Geofence.Builder()
                 .setRequestId(id)
                 .setCircularRegion(latitude, longitude, radius)
@@ -80,15 +99,14 @@ public class GeofencingModule extends ReactContextBaseJavaModule {
                     promise.reject("GEOFENCE_ERROR", e.getMessage());
                 });
     }
-
-    // ✅ 위치 정보 갱신을 시작하는 메소드 추가
+    
     @SuppressLint("MissingPermission")
     @ReactMethod
     public void startLocationUpdates() {
-        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000) // 10초 간격
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
                 .setWaitForAccurateLocation(false)
-                .setMinUpdateIntervalMillis(5000) // 최소 5초 간격
-                .setMaxUpdateDelayMillis(15000) // 최대 15초
+                .setMinUpdateIntervalMillis(5000)
+                .setMaxUpdateDelayMillis(15000)
                 .build();
 
         locationCallback = new LocationCallback() {

@@ -49,5 +49,6 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location" />
+        <service android:name=".GeofenceHeadlessTaskService" />
     </application>
 </manifest>
