@@ -80,11 +80,17 @@ public class GeofencingModule extends ReactContextBaseJavaModule {
         Intent intent = new Intent(reactContext, GeofenceBroadcastReceiver.class);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags |= PendingIntent.FLAG_IMMUTABLE;
+            flags |= PendingIntent.FLAG_MUTABLE;
         }
 
+        // requestCode를 고유하게 만들기 위해 id의 해시코드를 사용하거나, 0으로 고정하는 것이 좋습니다.
+        // System.currentTimeMillis()는 앱을 재시작할 때마다 바뀌어 의도치 않은 동작을 유발할 수 있습니다.
+        int requestCode = id.hashCode(); 
         PendingIntent geofencePendingIntent = PendingIntent.getBroadcast(
-                reactContext, (int) System.currentTimeMillis(), intent, flags
+        reactContext,
+        requestCode, // requestCode 수정
+        intent,
+        flags
         );
 
         geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)

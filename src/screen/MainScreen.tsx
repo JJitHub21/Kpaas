@@ -9,6 +9,7 @@ import AiChatbotSection from '../content/AiChatbotSection';
 import RecentActivityBox from '../content/RecentActivityBox'; // 보호자 전용
 import BottomNavigation from '../content/BottomNavigation';
 import UserGeofenceManager from '../components/UserGeofenceManager';
+import LocationUploader from '../native/LocationUploader';
 
 const MainScreen = () => {
   const [userType, setUserType] = useState<'user' | 'guardian' | null>(null);
@@ -44,6 +45,7 @@ const MainScreen = () => {
       <AiChatbotSection />
       </ScrollView>
       <BottomNavigation active="home" userType={userType} />
+      {userType === 'user' && <LocationUploader />}
     </SafeAreaView>
   );
 };
