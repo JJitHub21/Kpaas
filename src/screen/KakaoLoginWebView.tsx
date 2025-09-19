@@ -1,116 +1,148 @@
-
-import React from 'react';
-import { View} from 'react-native';
+import React, { useRef } from 'react';
+import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/navigationType';
-import CookieManager from '@react-native-cookies/cookies'; // 쿠키 충돌 관리 라이브러리
+import CookieManager from '@react-native-cookies/cookies';
 import Config from 'react-native-config';
+
+// URL/URLSearchParams 폴리필 (안드로이드 Hermes 대응)
+import 'react-native-url-polyfill/auto';
 
 const REST_API_KEY = Config.REST_API_KEY;
 const REDIRECT_URI = Config.REDIRECT_URI;
-
-// 카카오 OAuth 인가 엔드포인트 (권한코드 발급 단계)
-// 현재는 이후 백엔드가 토큰 교환 후 guard:// 스킴으로 앱을 리다이렉트
-const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
+const KAKAO_AUTH_URL =
+  `https://kauth.kakao.com/oauth/authorize?client_id=${REST_API_KEY}&redirect_uri=${REDIRECT_URI}&response_type=code`;
 
 export default function KakaoLoginWebView() {
-  // 로그인 성공 시 메인 화면으로 네비게이션 리셋
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const handledRef = useRef(false);      // 딥링크 중복 처리 방지
+  const hookCountRef = useRef({ shouldStart: 0, stateChange: 0 });
 
-  /**
-   * 커스텀 스킴(guard://...) 딥링크를 처리
-   * - URL 쿼리에서 accessToken / refreshToken / nickname을 파싱
-   * - 토큰/닉네임을 AsyncStorage에 저장
-   * - 메인 스택으로 reset
-   */
-  const handleOpenAppLink = async (url: string) => {
-    console.log('[KakaoLoginWebView.tsx] 딥링크 URL 감지됨:', url);
+  // ---------- 유틸: 안전 파서 (URL 실패 시 수동 파싱 폴백) ----------
+  const parseDeepLinkParams = (url: string) => {
+    try {
+      const u = new URL(url);
+      const q = u.searchParams;
+      return {
+        accessToken:  q.get('accessToken')  ?? '',
+        refreshToken: q.get('refreshToken') ?? '',
+        nickname:     q.get('nickname')     ?? '',
+        kakaoId:      q.get('kakaoId')      ?? '',
+      };
+    } catch (e) {
+      console.warn('[KakaoLoginWebView] URL 파싱 실패 → 수동 파싱 폴백 사용:', e);
+      const [, qs] = url.split('?');
+      const out: Record<string, string> = {};
+      if (qs) {
+        qs.split('&').forEach((kv) => {
+          const [k, v = ''] = kv.split('=');
+          if (k) out[k] = decodeURIComponent(v);
+        });
+      }
+      return {
+        accessToken:  out['accessToken']  ?? '',
+        refreshToken: out['refreshToken'] ?? '',
+        nickname:     out['nickname']     ?? '',
+        kakaoId:      out['kakaoId']      ?? '',
+      };
+    }
+  };
+
+  // ---------- 핵심: 딥링크 핸들러 ----------
+  const handleOpenAppLink = async (url: string, from: 'shouldStart' | 'stateChange') => {
+    if (handledRef.current) {
+      console.log('[KakaoLoginWebView] 이미 처리됨(handledRef=true). 호출 출처:', from);
+      return;
+    }
+    console.log('[KakaoLoginWebView] 딥링크 감지 from=', from, ' url=', url);
 
     try {
-      // guard://scheme?accessToken=...&refreshToken=...&nickname=...
-      const queryString = url.split('?')[1];
-      if (!queryString) return;
+      const { accessToken, refreshToken, nickname, kakaoId } = parseDeepLinkParams(url);
 
-      // 쿼리 파싱
-      const queryParts = queryString.split('&');
-      const params: Record<string, string> = {};
-      queryParts.forEach((part) => {
-        const [key, value] = part.split('=');
-        if (key && value) {
-          params[key] = decodeURIComponent(value);
-        }
-      });
+      // 로그(민감정보 10자만)
+      const trunc = (s: string) => (s ? s.slice(0, 10) + '...' : '');
+      console.log('[KakaoLoginWebView] 파싱 결과',
+        '\n  accessToken:', trunc(accessToken),
+        '\n  refreshToken:', trunc(refreshToken),
+        '\n  nickname:', nickname || '(없음)',
+        '\n  kakaoId:', kakaoId || '(없음)'
+      );
 
-      // 백엔드가 전달한 정보
-      const accessToken = params['accessToken'];
-      const refreshToken = params['refreshToken'];
-      const nickname = params['nickname'];
-      const kakaoId = params['kakaoId'];
-
-      console.log('[KakaoLoginWebView.tsx] accessToken:', accessToken);
-
-      if (accessToken) {
-        // 현재 구현: AsyncStorage에 토큰 저장
-        await AsyncStorage.setItem('jwt', accessToken);
-        if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
-        if (nickname) await AsyncStorage.setItem('nickname', nickname);
-        if (kakaoId) await AsyncStorage.setItem('kakaoId', kakaoId);
-
-        console.log('[KakaoLoginWebView.tsx] AsyncStorage 저장 완료');
-
-        // 메인 화면으로 스택 초기화
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
-      } else {
-        console.warn('[KakaoLoginWebView.tsx] accessToken 없음');
+      if (!accessToken) {
+        console.warn('[KakaoLoginWebView] accessToken 없음 → 처리 중단');
+        return;
       }
-    } catch (error) {
-      console.error('[KakaoLoginWebView.tsx] 딥링크 처리 중 오류 발생:', error);
+
+      console.log('[KakaoLoginWebView] AsyncStorage 저장 시작');
+      await AsyncStorage.setItem('jwt', accessToken);
+      if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
+      if (nickname)     await AsyncStorage.setItem('nickname', nickname);
+      if (kakaoId)      await AsyncStorage.setItem('kakaoId', kakaoId);
+
+      // 저장 검증용 읽기 (kakaoId만 확인)
+      const savedKakaoId = await AsyncStorage.getItem('kakaoId');
+      console.log('[KakaoLoginWebView] kakaoId 저장 확인:', savedKakaoId || '(없음)');
+
+      const userType = (await AsyncStorage.getItem('userType')) as 'user' | 'guardian' | null;
+      console.log('[KakaoLoginWebView] userType:', userType);
+
+      handledRef.current = true;
+      const nextRoute = userType === 'guardian' ? 'GuardianRegister' : 'Main';
+      console.log('[KakaoLoginWebView] 네비게이션 reset →', nextRoute);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: nextRoute as keyof RootStackParamList }],
+      });
+    } catch (e) {
+      console.error('[KakaoLoginWebView] 딥링크 처리 오류:', e);
     }
   };
 
   return (
     <View style={{ flex: 1 }}>
       <WebView
-        // 카카오 인가 페이지 로드
         source={{ uri: KAKAO_AUTH_URL }}
         javaScriptEnabled
         originWhitelist={['*']}
+        sharedCookiesEnabled
+        thirdPartyCookiesEnabled
 
-        // WebView와 네이티브 사이의 쿠키/세션 공유 설정
-        sharedCookiesEnabled={true}
-        thirdPartyCookiesEnabled={true}
-
-        // 네비게이션 직전 URL 검사 훅
-        // guard://로 시작하면 WebView 로드를 막고 네이티브 핸들러로 위임
-        onShouldStartLoadWithRequest={(request) => {
-          const url = request.url;
-          console.log('[WebView] onShouldStartLoadWithRequest URL:', url);
+        // guard://로 시작하면 네이티브 처리 → WebView 로드는 막음
+        onShouldStartLoadWithRequest={(req) => {
+          hookCountRef.current.shouldStart += 1;
+          const url = req?.url ?? '';
+          console.log(
+            '[WebView] onShouldStartLoadWithRequest 호출 #',
+            hookCountRef.current.shouldStart,
+            '\n  URL:', url
+          );
           if (url.startsWith('guard://')) {
-            handleOpenAppLink(url);
+            handleOpenAppLink(url, 'shouldStart');
             return false;
           }
           return true;
         }}
 
-        // 네비 상태가 변할 때도 URL을 감지
-        onNavigationStateChange={(navState) => {
-          const url = navState.url;
+        // 보조 훅: 일부 기기/상황에서만 트리거. handledRef로 재진입 방지.
+        onNavigationStateChange={(state) => {
+          hookCountRef.current.stateChange += 1;
+          const url = state?.url ?? '';
+          console.log(
+            '[WebView] onNavigationStateChange 호출 #',
+            hookCountRef.current.stateChange,
+            '\n  URL:', url
+          );
           if (url.startsWith('guard://')) {
-            handleOpenAppLink(url);
+            handleOpenAppLink(url, 'stateChange');
           }
         }}
 
-        // 페이지 로드 종료 시 쿠키 플러시
         onLoadEnd={() => {
-          CookieManager.flush().then(() => {
-            console.log('쿠키 flush 완료 (onLoadEnd)');
-          });
+          CookieManager.flush().then(() => console.log('[WebView] 쿠키 flush 완료'));
         }}
       />
     </View>

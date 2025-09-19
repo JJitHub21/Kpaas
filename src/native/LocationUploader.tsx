@@ -8,7 +8,8 @@ const BACKEND_URL = "http://3.37.99.32:8080/api/location"; // 실제 서버 주�
 
 export default function LocationUploader() {
   useEffect(() => {
-    let locationInterval: ReturnType<typeof setInterval> | null = null;
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     const requestPermission = async () => {
       if (Platform.OS === "android") {
@@ -20,7 +21,9 @@ export default function LocationUploader() {
       return true; // iOS는 Info.plist 설정 필요
     };
 
-    const startLocationTracking = async () => {
+    const uploadLocation = async () => {
+      if (!isMounted) return;
+
       const hasPermission = await requestPermission();
       if (!hasPermission) {
         Alert.alert("위치 권한이 필요합니다.");
@@ -29,15 +32,11 @@ export default function LocationUploader() {
 
       const kakaoId = await AsyncStorage.getItem("kakaoId");
       if (!kakaoId) {
-        console.warn("kakaoId 없음. 로그인 먼저 필요합니다.");
-        return;
-      }
-
-      locationInterval = setInterval(() => {
+        console.warn("[LocationUploader] kakaoId 없음. 로그인 먼저 필요합니다.");
+      } else {
         Geolocation.getCurrentPosition(
           async (pos) => {
             const { latitude, longitude, accuracy } = pos.coords;
-
             try {
               await axios.post(BACKEND_URL, {
                 userId: kakaoId,
@@ -61,15 +60,18 @@ export default function LocationUploader() {
           },
           { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
         );
-      }, 10000);
+      }
+
+      // ⏰ 다음 실행 예약 (30초 뒤)
+      timeoutId = setTimeout(uploadLocation, 30000);
     };
 
-    startLocationTracking();
+    // 첫 실행
+    uploadLocation();
 
     return () => {
-      if (locationInterval) {
-        clearInterval(locationInterval);
-      }
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 

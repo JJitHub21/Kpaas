@@ -8,28 +8,35 @@ export default function MapScreen() {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
- useEffect(() => {
+  useEffect(() => {
     const fetchLocation = async () => {
       try {
-         // AsyncStorage에서 kakaoId 가져오기
-        const kakaoId = await AsyncStorage.getItem('kakaoId');
-        if (!kakaoId) {
-          console.warn('kakaoId 없음: 로그인 시 저장 확인 필요');
+        // ✅ AsyncStorage에서 피보호자 ID 가져오기
+        const linkedUserId = await AsyncStorage.getItem('linkedUserId');
+        console.log('[MapScreen] linkedUserId:', linkedUserId);
+
+        if (!linkedUserId) {
+          console.warn('[MapScreen] linkedUserId 없음: GuardianRegisterScreen에서 등록 필요');
           return;
         }
 
-        const res = await axios.get(`http://3.37.99.32:8080/api/location/${kakaoId}`); // 🔁 실제 서버 주소
+        const url = `http://3.37.99.32:8080/api/location/${linkedUserId.trim()}`;
+        console.log('[MapScreen] 요청 URL:', url);
+
+        const res = await axios.get(url);
+        console.log('[MapScreen] 서버 응답:', res.data);
+
         const { latitude, longitude } = res.data;
         setLocation({ latitude, longitude });
         setLoading(false);
       } catch (err) {
-        console.error('피보호자 위치 불러오기 실패:', err);
+        console.error('[MapScreen] 피보호자 위치 불러오기 실패:', err);
       }
     };
 
     fetchLocation();
 
-    //  5초마다 위치 갱신 (실시간 업데이트 느낌)
+    // 5초마다 위치 갱신
     const interval = setInterval(fetchLocation, 5000);
     return () => clearInterval(interval);
   }, []);

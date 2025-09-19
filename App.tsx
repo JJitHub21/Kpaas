@@ -11,6 +11,7 @@ import KakaoLoginWebView from './src/screen/KakaoLoginWebView';
 import NaverLoginWebView from './src/screen/NaverLoginWebView';
 import MyScreen from './src/screen/MyScreen';
 import MapScreen from './src/screen/MapScreen'; // 구글 맵
+import GuardianRegister from './src/screen/GuardianRegisterScreen';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking, Alert } from 'react-native';
@@ -39,12 +40,15 @@ export default function App() {
         if (refreshToken) await AsyncStorage.setItem('refreshToken', refreshToken);
         if (nickname) await AsyncStorage.setItem('nickname', nickname);
 
+        // userType 가져오기
+        const userType = await AsyncStorage.getItem('userType');
+
         Alert.alert('자동 로그인 성공', `${nickname ?? '사용자'}님 환영합니다!`);
 
         navigationRef.current?.dispatch(
           CommonActions.reset({
             index: 0,
-            routes: [{ name: 'Main' }],
+            routes: [{ name: userType === 'guardian' ? 'GuardianRegister' : 'Main' }], // 보호자는 피보호자 등록 화면으로 이동
           })
         );
       }
@@ -80,6 +84,7 @@ export default function App() {
         <Stack.Screen name="Main" component={MainScreen} />
         <Stack.Screen name="My" component={MyScreen} />
         <Stack.Screen name="MapScreen" component={MapScreen} />
+        <Stack.Screen name="GuardianRegister" component={GuardianRegister} />
       </Stack.Navigator>
     </NavigationContainer>
   );

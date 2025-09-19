@@ -8,5 +8,6 @@ export type RootStackParamList = {
   NaverLoginWebView: undefined; // 네이버 로그인 WebView 스크린 추가
   My: undefined; // 마이 메뉴 스크린 추가
   MapScreen: undefined; // 구글 맵 스크린 추가
+  GuardianRegister: undefined;
 };
 
