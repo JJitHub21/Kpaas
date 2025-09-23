@@ -84,7 +84,7 @@ const NewsSection = () => {
       const formData = new FormData();
       formData.append('text', disasterInfo.summary);
 
-      const ttsResponse = await fetch('http://127.0.0.1:8000/tts', {
+      const ttsResponse = await fetch('http://192.168.219.110:8000/tts', {
         method: 'POST',
         body: formData,
       });

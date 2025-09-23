@@ -9,5 +9,6 @@ export type RootStackParamList = {
   My: undefined; // 마이 메뉴 스크린 추가
   MapScreen: undefined; // 구글 맵 스크린 추가
   GuardianRegister: undefined;
+  CameraScreen: undefined; // 카메라 스크린 추가
 };
 

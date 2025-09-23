@@ -27,32 +27,31 @@ const BottomNavigation = ({ active, userType }: BottomNavigationProps) => {
           color={active === 'home' ? '#000c49' : '#b6b6b6'}
           size={styles.iconSize.width}
         />
-        <Text
-          style={active === 'home' ? styles.label : styles.labelInactive}
-        >
+        <Text style={active === 'home' ? styles.label : styles.labelInactive}>
           홈
         </Text>
       </TouchableOpacity>
 
       {/* 중앙 버튼 */}
       <TouchableOpacity
-  style={[
-    styles.centerButton,
-    userType === 'guardian' && { backgroundColor: '#FFA94D' },
-  ]}
-  onPress={() => {
-    if(userType === 'guardian') {
-      navigation.navigate('MapScreen');
-    }
-    // TODO: user 타입일 때 동작 구현
-  }}
->
-  {userType === 'guardian' ? (
-    <LocateIcon color="#fff" size={styles.iconSize.width} />
-  ) : (
-    <MessageCircle color="#fff" size={styles.iconSize.width} />
-  )}
-</TouchableOpacity>
+        style={[
+          styles.centerButton,
+          userType === 'guardian' && { backgroundColor: '#FFA94D' },
+        ]}
+        onPress={() => {
+          if (userType === 'guardian') {
+            navigation.navigate('MapScreen');
+          } else {
+            navigation.navigate('CameraScreen'); // 이용자 모드 → 카메라 화면
+          }
+        }}
+      >
+        {userType === 'guardian' ? (
+          <LocateIcon color="#fff" size={styles.iconSize.width} />
+        ) : (
+          <MessageCircle color="#fff" size={styles.iconSize.width} />
+        )}
+      </TouchableOpacity>
 
       {/* 마이 아이콘 */}
       <TouchableOpacity
@@ -65,9 +64,7 @@ const BottomNavigation = ({ active, userType }: BottomNavigationProps) => {
           color={active === 'my' ? '#000c49' : '#b6b6b6'}
           size={styles.iconSize.width}
         />
-        <Text
-          style={active === 'my' ? styles.label : styles.labelInactive}
-        >
+        <Text style={active === 'my' ? styles.label : styles.labelInactive}>
           마이
         </Text>
       </TouchableOpacity>

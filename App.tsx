@@ -85,6 +85,7 @@ export default function App() {
         <Stack.Screen name="My" component={MyScreen} />
         <Stack.Screen name="MapScreen" component={MapScreen} />
         <Stack.Screen name="GuardianRegister" component={GuardianRegister} />
+        <Stack.Screen name="CameraScreen" component={require('./src/screen/CameraScreen').default} />
       </Stack.Navigator>
     </NavigationContainer>
   );
