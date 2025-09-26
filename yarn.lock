@@ -6756,6 +6756,11 @@ react-native-config@^1.5.6:
   resolved "https://registry.npmjs.org/react-native-config/-/react-native-config-1.5.6.tgz"
   integrity sha512-UB3LEco0FGGbbGvS+DfH2VmGKiP/y5C2MkmfBmfsIaxHSbM1KOTMKYG7YRf6xFhZbJ/01BedHG7SIny5i7N9BQ==
 
+react-native-device-info@^14.1.1:
+  version "14.1.1"
+  resolved "https://registry.npmjs.org/react-native-device-info/-/react-native-device-info-14.1.1.tgz"
+  integrity sha512-lXFpe6DJmzbQXNLWxlMHP2xuTU5gwrKAvI8dCAZuERhW9eOXSubOQIesk9lIBnsi9pI19GMrcpJEvs4ARPRYmw==
+
 react-native-edge-to-edge@1.6.0:
   version "1.6.0"
   resolved "https://registry.npmjs.org/react-native-edge-to-edge/-/react-native-edge-to-edge-1.6.0.tgz"

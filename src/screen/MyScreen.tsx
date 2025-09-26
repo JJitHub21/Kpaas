@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   View,
@@ -6,7 +6,6 @@ import {
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import CookieManager from '@react-native-cookies/cookies';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -15,7 +14,6 @@ import UserInfo from '../content/UserInfo';
 import FeatureCard from '../content/FeatureCard';
 import BottomNavigation from '../content/BottomNavigation';
 import { RootStackParamList } from '../navigation/navigationType';
-import { useEffect, useState } from 'react';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -23,37 +21,42 @@ type MyScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Mai
 
 export default function MyScreen() {
   const [userType, setUserType] = useState<'user' | 'guardian' | null>(null);
+  const navigation = useNavigation<MyScreenNavigationProp>();
 
   useEffect(() => {
-    console.log('[MainScreen.tsx] MainScreen 진입함');
-
+    console.log('[MyScreen] 진입');
     const getUserType = async () => {
       const type = await AsyncStorage.getItem('userType');
       if (type === 'user' || type === 'guardian') {
         setUserType(type);
-        console.log('[MainScreen.tsx] userType:', type);
+        console.log('[MyScreen] userType:', type);
       }
     };
-
     getUserType();
   }, []);
 
-  const navigation = useNavigation<MyScreenNavigationProp>();
-
   const handleLogout = async () => {
     try {
-      // 1. AsyncStorage에 저장된 토큰 및 사용자 정보 삭제
-      await AsyncStorage.multiRemove(['jwt', 'refreshToken', 'nickname']);
-      console.log('[Logout] AsyncStorage cleared');
+      const type = await AsyncStorage.getItem('userType');
 
-      // 2. WebView 쿠키 삭제 (Kakao/Naver 세션 제거)
-      await CookieManager.clearAll(true);
-      console.log('[Logout] CookieManager cleared');
+      if (type === 'user') {
+        await AsyncStorage.multiRemove(['userType', 'protectedUserId', 'uniqueCode']);
+        console.log('[Logout] 이용자 데이터 삭제 완료');
+      } else if (type === 'guardian') {
+        await AsyncStorage.multiRemove([
+          'userType',
+          'guardianId',
+          'accessToken',
+          'refreshToken',
+          'linkedUserId',
+        ]);
+        console.log('[Logout] 보호자 데이터 삭제 완료');
+      }
 
-      // 3. 로그인 화면으로 이동
+      // 로그인 타입 선택 화면으로 이동
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Login' }],
+        routes: [{ name: 'LoginType' }],
       });
     } catch (error) {
       console.error('로그아웃 중 오류 발생:', error);

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react
 import Sound from 'react-native-sound';
 import RNFS from 'react-native-fs';
 import styles from '../style/NewsSectionStyle';
+import Config from 'react-native-config';
 
 if (Platform.OS === 'android') {
   Sound.setCategory('Playback');
@@ -13,9 +14,8 @@ interface DisasterInfo {
   summary: string;
 }
 
-// ------------------- 서비스 키 입력 -------------------
-const SAFETY_DATA_API_KEY = '7753WFM75S171420';
-// --------------------------------------------------------
+const SAFETY_DATA_API_KEY = Config.SAFETY_DATA_API_KEY; 
+const AI_SERVER_URL = Config.AI_SERVER_URL;
 
 const NewsSection = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -26,8 +26,19 @@ const NewsSection = () => {
   useEffect(() => {
     const fetchAndProcessDisasterInfo = async () => {
       setIsLoading(true);
+      
+      const apiKey = SAFETY_DATA_API_KEY;
+      if (!apiKey) {
+        console.error("SAFETY_DATA_API_KEY가 .env 파일에 설정되지 않았습니다.");
+        setDisasterInfo({
+          summary: 'API 키 설정 오류. 관리자에게 문의하세요.',
+          urgency: '경보',
+        });
+        setIsLoading(false);
+        return;
+      }
       try {
-        const serviceKey = encodeURIComponent(SAFETY_DATA_API_KEY);
+        const serviceKey = encodeURIComponent(apiKey);
         const url = `https://www.safetydata.go.kr/V2/api/DSSP-IF-00247?serviceKey=${serviceKey}&pageNo=1&numOfRows=1&returnType=json`;
 
         const response = await fetch(url);
@@ -45,18 +56,30 @@ const NewsSection = () => {
           return;
         }
 
-        // const formData = new FormData();
-        // formData.append('text', rawMessage);
+        const formData = new FormData();
+        formData.append('text', rawMessage);
+
+        let summaryText = rawMessage; // 기본값은 원본 메시지
         
-        // const summaryResponse = await fetch('http://127.0.0.1:8000/summarize', {
-        //   method: 'POST',
-        //   body: formData,
-        // });
-        // const summaryData = await summaryResponse.json();
-        // const summaryText = summaryData.summary;
+        try {
+          const summaryResponse = await fetch(`${AI_SERVER_URL}/summarize`, {
+            method: 'POST',
+            body: formData,
+          });
+
+        if (summaryResponse.ok) {
+          const summaryData = await summaryResponse.json();
+          summaryText = summaryData.summary; // 요약 성공 시, 요약된 텍스트로 교체
+          } else {
+            console.log("요약 서버 응답 실패, 원본 메시지를 사용합니다.");
+          }
+        } catch (e) {
+          console.error("요약 요청 중 네트워크 오류 발생:", e);
+    // 요약 실패 시에도 앱이 멈추지 않도록 원본 메시지를 그대로 사용합니다.
+    }
 
         setDisasterInfo({
-          summary: rawMessage,
+          summary: summaryText,
           urgency: rawMessage.includes('경보') ? '경보' : (rawMessage.includes('주의') ? '주의' : '안전'),
         });
 
@@ -84,7 +107,7 @@ const NewsSection = () => {
       const formData = new FormData();
       formData.append('text', disasterInfo.summary);
 
-      const ttsResponse = await fetch('http://192.168.219.110:8000/tts', {
+      const ttsResponse = await fetch(`${AI_SERVER_URL}/tts`, {
         method: 'POST',
         body: formData,
       });
@@ -153,7 +176,7 @@ const NewsSection = () => {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <Text style={styles.ttsButtonText}>
-                  {isPlaying ? '재생 중...' : '음성으로 듣기 �'}
+                  {isPlaying ? '재생 중...' : '음성으로 듣기'}
                 </Text>
               )}
             </TouchableOpacity>
